@@ -1,5 +1,6 @@
 package com.schmalfuss.market.controller;
 
+import com.schmalfuss.market.exception.MarketNotFoundException;
 import com.schmalfuss.market.model.Market;
 import com.schmalfuss.market.service.MarketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,22 @@ public class MarketController {
                 .map(m -> ResponseEntity.ok().body(m));
     }
 
+    @PutMapping("/{id}")
+    public Mono<ResponseEntity<Market>> update(@RequestBody MarketRequest market, @PathVariable String id) {
+        return marketService.update(market.create(), id)
+                .map(m -> ResponseEntity.ok().body(m))
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> remove(@PathVariable String id) {
-        return marketService.remove(id)
-                .then(Mono.just(ResponseEntity.ok().<Void>build()))
-                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
-                .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()));
+        try {
+            return marketService.remove(id)
+                    .then(Mono.just(ResponseEntity.ok().<Void>build()))
+                    .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
+                    .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()));
+        } catch (MarketNotFoundException e) {
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        }
     }
 }

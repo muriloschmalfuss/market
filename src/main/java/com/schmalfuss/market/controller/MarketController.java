@@ -1,10 +1,9 @@
 package com.schmalfuss.market.controller;
 
-import com.schmalfuss.market.exception.MarketNotFoundException;
+import com.schmalfuss.market.model.Currency;
 import com.schmalfuss.market.model.Market;
 import com.schmalfuss.market.service.MarketService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -40,13 +39,16 @@ public class MarketController {
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> remove(@PathVariable String id) {
-        try {
-            return marketService.remove(id)
-                    .then(Mono.just(ResponseEntity.ok().<Void>build()))
-                    .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
-                    .onErrorResume(e -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()));
-        } catch (MarketNotFoundException e) {
-            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        }
+        return marketService.remove(id)
+                .then(Mono.just(ResponseEntity.ok().<Void>build()))
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    @GetMapping("/currency/{id}")
+    public Mono<ResponseEntity<Flux<Currency>>> currency(@PathVariable String id) {
+        return marketService.currency(id)
+                .collectList()
+                .map(m -> ResponseEntity.ok().body(Flux.fromIterable(m)))
+                .switchIfEmpty(Mono.just(ResponseEntity.noContent().build()));
     }
 }

@@ -4,7 +4,6 @@ import com.schmalfuss.market.model.Market;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.yaml.snakeyaml.error.Mark;
 
 import java.math.BigDecimal;
 
